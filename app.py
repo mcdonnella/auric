@@ -1,6 +1,8 @@
 from flask import Flask, request
 import requests
 import yaml
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load configuration from config.yaml
 with open("config.yaml", "r") as config_file:
@@ -29,8 +31,12 @@ def webhook():
         print("Message format not recognised")
         return "ok", 200
     
-    print(f"Parent item: {parsed['parent_item']}")
-    print(f"Sub-item: {parsed['sub_item']}")
+    success, result = create_monday_subitem(parsed["parent_item"], parsed["sub_item"])
+    
+    if success:
+        print(f"Sub-item created: {result}")
+    else:
+        print(f"Error: {result}")
     
     return "ok", 200
 
@@ -58,3 +64,59 @@ def parse_message(text):
         "parent_item": parts[1].strip(),
         "sub_item": parts[2].strip()
     }
+
+def create_monday_subitem(parent_item_name, sub_item_name):
+    # Monday.com API endpoint
+    url = "https://api.monday.com/v2"
+    
+    # Headers to authenticate with Monday.com
+    headers = {
+        "Authorization": MONDAY_API_TOKEN,
+        "Content-Type": "application/json"
+    }
+    
+    # First query - find the parent item ID by searching for its name on the board
+    search_query = f"""
+    query {{
+        boards(ids: {MONDAY_BOARD_ID}) {{
+            items_page {{
+                items {{
+                    id
+                    name
+                }}
+            }}
+        }}
+    }}
+    """
+    
+    # Send the search request to Monday.com
+    response = requests.post(url, json={"query": search_query}, headers=headers, verify=False)
+    data = response.json()
+    
+    # Loop through items to find matching parent item name
+    items = data["data"]["boards"][0]["items_page"]["items"]
+    parent_id = None
+    for item in items:
+        if item["name"].lower() == parent_item_name.lower():
+            parent_id = item["id"]
+            break
+    
+    # If no matching parent item found, return an error
+    if not parent_id:
+        return False, f"Could not find parent item: {parent_item_name}"
+    
+    # Second query - create the sub-item under the parent item
+    create_query = f"""
+    mutation {{
+        create_subitem(parent_item_id: {parent_id}, item_name: "{sub_item_name}") {{
+            id
+            name
+        }}
+    }}
+    """
+    
+    # Send the create request to Monday.com
+    response = requests.post(url, json={"query": create_query}, headers=headers, verify=False)
+    data = response.json()
+    
+    return True, sub_item_name
