@@ -23,9 +23,38 @@ def webhook():
     chat_id = message.get("chat", {}).get("id")
     text = message.get("text", "")
     
-    print(f"Received message: {text} from chat_id: {chat_id}")
+    parsed = parse_message(text)
+    
+    if parsed is None:
+        print("Message format not recognised")
+        return "ok", 200
+    
+    print(f"Parent item: {parsed['parent_item']}")
+    print(f"Sub-item: {parsed['sub_item']}")
     
     return "ok", 200
 
 if __name__ == "__main__":
     app.run(port=5000)
+
+def parse_message(text):
+    # Get the prefix and separator from config
+    prefix = config["message_format"]["prefix"]
+    separator = config["message_format"]["separator"]
+    
+    # Check the message starts with the correct prefix e.g. "ADD"
+    if not text.startswith(prefix):
+        return None
+    
+    # Split the message by the separator e.g. "|"
+    parts = text.split(separator)
+    
+    # We expect exactly 3 parts: ADD | Parent Item | Sub-item
+    if len(parts) != 3:
+        return None
+    
+    # Strip whitespace from each part and return as a dictionary
+    return {
+        "parent_item": parts[1].strip(),
+        "sub_item": parts[2].strip()
+    }
