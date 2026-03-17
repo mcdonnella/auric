@@ -48,9 +48,8 @@ if __name__ == "__main__":
     app.run(port=5000)
 
 def parse_message(text):
-    # Get the prefix and separator from config
-    prefix = config["message_format"]["prefix"]
-    separator = config["message_format"]["separator"]
+    prefix = config["message_format"]["prefix"] if os.path.exists("config.yaml") else os.environ.get("MESSAGE_PREFIX", "ADD")
+    separator = config["message_format"]["separator"] if os.path.exists("config.yaml") else os.environ.get("MESSAGE_SEPARATOR", "|")
     
     # Check the message starts with the correct prefix e.g. "ADD"
     if not text.startswith(prefix):
