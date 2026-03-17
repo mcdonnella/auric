@@ -47,6 +47,23 @@ def webhook():
 if __name__ == "__main__":
     app.run(port=5000)
 
+@app.route("/shortcut", methods=["POST"])
+def shortcut():
+    data = request.get_json()
+    
+    parent_item = data.get("parent_item", "").strip()
+    sub_item = data.get("sub_item", "").strip()
+    
+    if not parent_item or not sub_item:
+        return {"status": "error", "message": "Missing fields"}, 400
+    
+    success, result = create_monday_subitem(parent_item, sub_item)
+    
+    if success:
+        return {"status": "ok", "message": f"Sub-item created: {result}"}, 200
+    else:
+        return {"status": "error", "message": result}, 400
+
 def parse_message(text):
     # Check message starts with /
     if not text.startswith("/"):
