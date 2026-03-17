@@ -2,16 +2,20 @@ from flask import Flask, request
 import requests
 import yaml
 import urllib3
+import os
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Load configuration from config.yaml
-with open("config.yaml", "r") as config_file:
-    config = yaml.safe_load(config_file)
-
-# Pull credentials from config
-TELEGRAM_TOKEN = config["telegram"]["bot_token"]
-MONDAY_API_TOKEN = config["monday"]["api_token"]
-MONDAY_BOARD_ID = config["monday"]["board_id"]
+# Load from environment variables if available (Railway), otherwise use config.yaml
+if os.path.exists("config.yaml"):
+    with open("config.yaml", "r") as config_file:
+        config = yaml.safe_load(config_file)
+    TELEGRAM_TOKEN = config["telegram"]["bot_token"]
+    MONDAY_API_TOKEN = config["monday"]["api_token"]
+    MONDAY_BOARD_ID = config["monday"]["board_id"]
+else:
+    TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+    MONDAY_API_TOKEN = os.environ.get("MONDAY_API_TOKEN")
+    MONDAY_BOARD_ID = os.environ.get("MONDAY_BOARD_ID")
 
 # Initialise Flask app
 app = Flask(__name__)
