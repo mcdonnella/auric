@@ -1,0 +1,10 @@
+telegram:
+  bot_token: "YOUR_TELEGRAM_BOT_TOKEN"
+
+monday:
+  api_token: "YOUR_MONDAY_API_TOKEN"
+  board_id: "YOUR_BOARD_ID"
+
+message_format:
+  prefix: "ADD"
+  separator: "|"
