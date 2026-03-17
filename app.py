@@ -48,24 +48,23 @@ if __name__ == "__main__":
     app.run(port=5000)
 
 def parse_message(text):
-    prefix = config["message_format"]["prefix"] if os.path.exists("config.yaml") else os.environ.get("MESSAGE_PREFIX", "ADD")
-    separator = config["message_format"]["separator"] if os.path.exists("config.yaml") else os.environ.get("MESSAGE_SEPARATOR", "|")
-    
-    # Check the message starts with the correct prefix e.g. "ADD"
-    if not text.startswith(prefix):
+    # Check message starts with /
+    if not text.startswith("/"):
         return None
     
-    # Split the message by the separator e.g. "|"
-    parts = text.split(separator)
+    # Remove the leading / then split on the next / only
+    # maxsplit=1 means we only split on the first / leaving sub-item names free to contain /
+    text = text[1:]  # strip the leading /
+    parts = text.split("/", maxsplit=1)
     
-    # We expect exactly 3 parts: ADD | Parent Item | Sub-item
-    if len(parts) != 3:
+    # We need exactly 2 parts: parent item and sub-item
+    if len(parts) != 2:
         return None
     
-    # Strip whitespace from each part and return as a dictionary
+    # Strip whitespace from both parts
     return {
-        "parent_item": parts[1].strip(),
-        "sub_item": parts[2].strip()
+        "parent_item": parts[0].strip(),
+        "sub_item": parts[1].strip()
     }
 
 def create_monday_subitem(parent_item_name, sub_item_name):
